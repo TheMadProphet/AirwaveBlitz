@@ -1,4 +1,4 @@
-from app.airwave_blitz_service import AirwaveBlitzService
+from airwave_blitz_service import AirwaveBlitzService
 
 
 def test_should_create_airwave_blitz_service() -> None:

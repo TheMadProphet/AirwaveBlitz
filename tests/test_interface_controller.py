@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-from app.interface import Interface, InterfaceMode
-from app.iw_ip import IwIp as InterfaceController
+from interface import Interface, InterfaceMode
+from iw_ip import IwIp as InterfaceController
 
 iface_name = "wlx00c0caae5a41"
 iface_mac = "00:c0:ca:ae:5a:41"

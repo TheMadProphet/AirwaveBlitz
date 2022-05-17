@@ -1,0 +1,91 @@
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: python:3.10
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Print out python version
+        run: python -V
+
+      - name: Create and activate virtual environment
+        run: |
+          pip install virtualenv
+          virtualenv venv
+
+      - name: Install required packages and project
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
+          pip install -e .
+
+  #     - name: Upload build artifacts
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: build
+  #         path: |
+  #           .cache/pip
+  #           venv
+  #
+  # unit-test:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   container: python:3.10
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #
+  #   steps:
+  #     - name: Download build artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: build
+
+      - name: Run unit tests
+        run: |
+          source venv/bin/activate
+          pytest .
+  #
+  # type-check:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   container: python:3.10
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #
+  #   steps:
+  #     - name: Download build artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: build
+
+      - name: Run mypy script
+        run: |
+          source venv/bin/activate
+          ./bin/mypy.sh
+  #
+  # linter-test:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   container: python:3.10
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #
+  #   steps:
+  #     - name: Download build artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: build
+
+      - name: Run flake8
+        run: |
+          source venv/bin/activate
+          flake8 .
