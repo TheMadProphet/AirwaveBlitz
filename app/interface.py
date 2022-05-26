@@ -9,6 +9,12 @@ class InterfaceMode(Enum):
     MONITOR = "monitor"
 
 
+class InterfaceState(Enum):
+    UP = "up"
+    DOWN = "down"
+    DORMANT = "dormant"
+
+
 @dataclass(frozen=True)
 class Interface:
     name: str

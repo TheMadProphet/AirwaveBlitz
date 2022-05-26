@@ -5,6 +5,8 @@ from typing import Dict, Iterable, List
 
 import netifaces as ni
 
+from app.interface import InterfaceMode, InterfaceState
+
 
 class IwIpException(Exception):
     pass
@@ -82,16 +84,18 @@ class IwIp:
         IwIp.run_ip(f"set {iface} down")
 
     @staticmethod
-    def is_up(iface: str) -> bool:
-        return IwIp.ip_info(iface)["operstate"] == "UP"
+    def get_state(iface: str) -> InterfaceState:
+        state = IwIp.ip_info(iface)["operstate"]
+        return InterfaceState[state]
 
     @staticmethod
-    def get_mode(iface: str) -> str:
-        return IwIp.iw_info(iface)["type"]
+    def get_mode(iface: str) -> InterfaceMode:
+        mode = IwIp.iw_info(iface)["type"]
+        return InterfaceMode[mode]
 
     @staticmethod
-    def set_mode(iface: str, mode: str) -> None:
-        IwIp.run_iw(iface, "set type " + mode)
+    def set_mode(iface: str, mode: InterfaceMode) -> None:
+        IwIp.run_iw(iface, "set type " + mode.value)
 
     @staticmethod
     def get_channel(iface: str) -> int:
@@ -107,7 +111,7 @@ class IwIp:
 
     @staticmethod
     def get_mac(iface: str) -> str:
-        return IwIp.ip_info(iface)["address"]
+        return IwIp.ip_info(iface)["address"].lower()
 
     @staticmethod
     def set_mac(iface: str, mac: str) -> None:
@@ -129,6 +133,7 @@ class IwIp:
     def get_info(iface: str) -> Dict[str, str]:
         return {
             "Name": IwIp.get_name(iface),
+            "State": IwIp.get_state(iface).value,
             "MAC": IwIp.get_mac(iface),
             "Mode": IwIp.get_mode(iface),
             "Channel": str(IwIp.get_channel(iface)),

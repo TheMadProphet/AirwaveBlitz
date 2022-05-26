@@ -1,5 +1,7 @@
 from typing import Iterable, Protocol
 
+from app.interface import InterfaceMode, InterfaceState
+
 
 class InterfaceController(Protocol):
     def list_interfaces(self) -> Iterable[str]:
@@ -11,13 +13,13 @@ class InterfaceController(Protocol):
     def down(self, iface: str) -> None:
         pass
 
-    def is_up(self, iface: str) -> bool:
+    def get_state(self, iface: str) -> InterfaceState:
         pass
 
-    def get_mode(self, iface: str) -> str:
+    def get_mode(self, iface: str) -> InterfaceMode:
         pass
 
-    def set_mode(self, iface: str, mode: str) -> None:
+    def set_mode(self, iface: str, mode: InterfaceMode) -> None:
         pass
 
     def get_channel(self, iface: str) -> int:

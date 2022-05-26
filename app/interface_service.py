@@ -1,7 +1,11 @@
 import time
 from dataclasses import dataclass
 from multiprocessing import Process
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable
+
+from scapy.all import AsyncSniffer
+from scapy.packet import Packet
+from scapy.plist import PacketList
 
 from app.interface import Interface, InterfaceMode
 from app.interface_controller import InterfaceController
@@ -10,20 +14,39 @@ from app.interface_controller import InterfaceController
 @dataclass
 class InterfaceService:
     interface_controller: InterfaceController
-    channel_hop_process: Process
+    channel_hop_process: Process = Process()
+    sniffer: AsyncSniffer = AsyncSniffer()
 
     def list_interface(self) -> Iterable[str]:
         return self.interface_controller.list_interfaces()
 
-    def monitor_channel(self, iface_name: str, channel: int) -> None:
-        # TODO
-        pass
+    def monitor_channel(
+        self, iface_name: str, channel: int, packet_processor: Callable[[Packet], Any]
+    ) -> None:
+        self.__set_mode(iface_name, InterfaceMode.MONITOR)
+        self.interface_controller.set_channel(iface_name, channel)
 
-    def monitor_all_channels(self, iface_name: str) -> None:
+        self.sniffer = AsyncSniffer(iface=iface_name, prn=packet_processor)
+        self.sniffer.start()
+
+    def monitor_all_channels(
+        self, iface_name: str, packet_processor: Callable[[Packet], Any]
+    ) -> None:
+        self.__set_mode(iface_name, InterfaceMode.MONITOR)
         self.__start_channel_hop(iface_name)
-        # self.monitor_packets(process=process_packet)
-        # TODO
-        pass
+
+        self.sniffer = AsyncSniffer(iface=iface_name, prn=packet_processor)
+        self.sniffer.start()
+
+    def is_monitoring(self) -> bool:
+        return self.sniffer.running
+
+    def stop_monitoring(self) -> PacketList:
+        if self.sniffer.running:
+            if self.__is_channel_hopping():
+                self.__stop_channel_hop()
+
+            return self.sniffer.stop()  # TODO: join?
 
     def set_mac(self, iface_name: str, mac: str) -> None:
         if not Interface.is_valid_mac(mac):
@@ -33,6 +56,9 @@ class InterfaceService:
         self.interface_controller.down(iface_name)
         self.interface_controller.set_mac(iface_name, mac)
         self.interface_controller.up(iface_name)
+
+    def get_mac(self, iface_name: str) -> str:
+        return self.interface_controller.get_mac(iface_name)
 
     def set_name(self, iface_name: str, name: str) -> None:
         name = name.strip()
@@ -55,17 +81,8 @@ class InterfaceService:
     def __set_mode(self, iface_name: str, mode: InterfaceMode) -> None:
         self.stop_processes()
         self.interface_controller.down(iface_name)
-        self.interface_controller.set_mode(iface_name, mode.value)
+        self.interface_controller.set_mode(iface_name, mode)
         self.interface_controller.up(iface_name)
-
-    def __up(self, iface_name: str) -> None:
-        self.interface_controller.up(iface_name)
-
-    def __down(self, iface_name: str) -> None:
-        self.interface_controller.down(iface_name)
-
-    def __is_up(self, iface_name: str) -> bool:
-        return self.interface_controller.is_up(iface_name)
 
     def __start_channel_hop(self, iface_name: str) -> None:
         assert self.__is_channel_hopping() is False, "channel is already hopping"
@@ -96,5 +113,4 @@ class InterfaceService:
         return self.channel_hop_process.is_alive()
 
     def stop_processes(self) -> None:
-        if self.__is_channel_hopping():
-            self.__stop_channel_hop()
+        self.stop_monitoring()
