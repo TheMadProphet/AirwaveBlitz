@@ -24,9 +24,7 @@ class IwIp:
             if stderr:
                 raise IwIpException(stderr)
 
-        stdout = ""
-        if proc.stdout:
-            stdout = proc.stdout.read().decode("utf-8")
+        stdout = proc.stdout.read().decode("utf-8") if proc.stdout else ""
 
         return stdout
 
@@ -69,7 +67,7 @@ class IwIp:
         return result
 
     @staticmethod
-    def ip_info(iface: str) -> Dict:
+    def ip_info(iface: str) -> Dict:  # type: ignore
         stdout = IwIp.run_ip(f"show {iface}", json_ouput=True)
 
         return json.loads(stdout)[0]
@@ -128,16 +126,6 @@ class IwIp:
     @staticmethod
     def is_connected(iface: str) -> bool:
         pass
-
-    @staticmethod
-    def get_info(iface: str) -> Dict[str, str]:
-        return {
-            "Name": IwIp.get_name(iface),
-            "State": IwIp.get_state(iface).value,
-            "MAC": IwIp.get_mac(iface),
-            "Mode": IwIp.get_mode(iface),
-            "Channel": str(IwIp.get_channel(iface)),
-        }
 
     # TODO
     @staticmethod

@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from app.interface import Interface
 from app.interface_service import InterfaceService
 from app.iw_ip import IwIp
 
@@ -23,20 +24,23 @@ def test_list_interface() -> None:
 
 @pytest.mark.skipif(not run_all_tests, reason="may loose original MAC if test fails")
 def test_interface_mac() -> None:
+    def interface() -> Interface:
+        return iface_service.get_interface(iface_name)
+
     mac1 = "44:ee:bc:6c:76:ba"
     mac2 = "8e:a7:51:6d:60:41"
 
-    assert iface_service.get_mac(iface_name) == iface_mac
+    assert interface().mac == iface_mac
 
     iface_service.set_mac(iface_name, mac1)
-    assert iface_service.get_mac(iface_name) == mac1
+    assert interface().mac == mac1
 
     iface_service.set_mac(iface_name, mac2)
-    assert iface_service.get_mac(iface_name) == mac2
+    assert interface().mac == mac2
 
     iface_service.set_mac(iface_name, mac1)
     iface_service.set_mac(iface_name, iface_mac)
-    assert iface_service.get_mac(iface_name) == iface_mac
+    assert interface().mac == iface_mac
 
     with pytest.raises(ValueError):
         iface_service.set_mac(iface_name, "aa:bb:cc:dd:ee:f")
@@ -44,7 +48,7 @@ def test_interface_mac() -> None:
     with pytest.raises(ValueError):
         iface_service.set_mac(iface_name, "aa:bb:22:a:3:")
 
-    assert iface_service.get_mac(iface_name) == iface_mac
+    assert interface().mac == iface_mac
 
 
 # TODO: Fails without root privilege

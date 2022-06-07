@@ -21,7 +21,7 @@ class Interface:
     mode: InterfaceMode
     channel: int
     mac: str
-    is_up: bool
+    state: InterfaceState
     HOP_INTERVAL: Final = 0.15
 
     # def __init__(self):

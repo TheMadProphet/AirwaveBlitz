@@ -20,6 +20,17 @@ class InterfaceService:
     def list_interface(self) -> Iterable[str]:
         return self.interface_controller.list_interfaces()
 
+    # TODO: optimize? (move to controller)
+    def get_interface(self, iface: str) -> Interface:
+        return Interface(
+            name=self.interface_controller.get_name(iface),
+            mode=self.interface_controller.get_mode(iface),
+            channel=self.interface_controller.get_channel(iface),
+            mac=self.interface_controller.get_mac(iface),
+            state=self.interface_controller.get_state(iface),
+        )
+
+    # TODO: move out monitor-related service
     def monitor_channel(
         self, iface_name: str, channel: int, packet_processor: Callable[[Packet], Any]
     ) -> None:
@@ -97,7 +108,7 @@ class InterfaceService:
             while True:
                 try:
                     for channel in range(1, 14):
-                        self.__set_channel(iface_name, channel)
+                        self.interface_controller.set_channel(iface_name, channel)
                         time.sleep(Interface.HOP_INTERVAL)
                 except KeyboardInterrupt:
                     break
