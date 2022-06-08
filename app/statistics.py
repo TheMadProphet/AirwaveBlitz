@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Set
+from typing import Dict, Set, Tuple
 
 from scapy.layers.dot11 import (
     AKMSuite,
@@ -9,14 +9,15 @@ from scapy.layers.dot11 import (
     Dot11Beacon,
     Dot11Elt,
     Dot11EltMicrosoftWPA,
+    Dot11FCS,
     Dot11ProbeResp,
     RadioTap,
     RSNCipherSuite,
 )
-from scapy.layers.eap import EAPOL
 from scapy.plist import PacketList
 
 from app.packets.dot11 import Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID, Packet
+from app.packets.eap import EAPOL
 
 
 @dataclass
@@ -67,31 +68,73 @@ class Device:
 
 @dataclass
 class Handshake:
-    bssid: str
-    keys: Dict[int, EAPOL]
+    messages: Dict[int, Packet]
+
+    def register_message(self, packet: Packet) -> None:
+        if self.is_captured():
+            return
+
+        message = packet[EAPOL]
+        message_number = message.get_handshake_sequence()
+
+        if message_number == 1:
+            self.reset()
+            self.messages[message_number] = packet
+
+        elif message_number == 2:
+            self.messages[message_number] = packet
+
+        elif message_number == 3:
+            if message.nonce == self.messages[1].nonce:
+                self.messages[message_number] = packet
+
+        elif message_number == 4:
+            if message.nonce == self.messages[2].nonce:
+                self.messages[message_number] = packet
 
     def is_captured(self) -> bool:
-        return self.keys is not None
+        if len(self.messages) == 4:
+            return (
+                self.messages[1].nonce == self.messages[3].nonce
+                and self.messages[2].nonce == self.messages[4].nonce
+            )
+
+        return False
+
+    def reset(self) -> None:
+        self.messages = dict()
+
+    def packets(self) -> PacketList:
+        return PacketList(list(self.messages.values()))
 
 
 class Statistics:
     def __init__(self) -> None:
         self.access_points: Dict[str, AccessPoint] = dict()
-        self.handshakes: Dict[str, Handshake] = dict()
+        self.handshakes: Dict[Tuple[str, str], Handshake] = dict()
         self.devices: Dict[str, Device] = dict()
         self.packets = PacketList()
 
     def process_packet(self, packet: Packet) -> None:
         if packet.haslayer(Dot11):
             if packet.haslayer(Dot11Beacon) or packet.haslayer(Dot11ProbeResp):
-                self.__process_beacon_manual(packet)
+                self.__process_beacon(packet)
+            if packet.haslayer(EAPOL):
+                self.__process_eapol(packet)
 
         self.packets.append(packet)
 
     def get_ap(self, mac: str) -> AccessPoint:
         return self.access_points[mac]
 
-    def __process_beacon_manual(self, packet: Packet) -> None:
+    def get_handshake(self, bssid: str) -> PacketList:
+        for (_bssid, client), handshake in self.handshakes.items():
+            if _bssid == bssid and handshake.is_captured():
+                return handshake.packets()
+
+        return PacketList()
+
+    def __process_beacon(self, packet: Packet) -> None:
         assert packet.haslayer(Dot11Beacon) or packet.haslayer(Dot11ProbeResp)
 
         ap = AccessPoint.empty(bssid=packet[Dot11].addr3)
@@ -128,3 +171,31 @@ class Statistics:
             ap.beacon_count += 1
 
         self.access_points[ap.bssid] = ap
+
+    def __process_eapol(self, packet: Packet) -> None:
+        assert packet.haslayer(EAPOL)
+
+        bssid, client = self.__extract_macs_from(packet)
+        if (bssid, client) in self.handshakes:
+            handshake = self.handshakes[bssid, client]
+        else:
+            handshake = Handshake(dict())
+
+        handshake.register_message(packet)
+
+        if handshake.is_captured():
+            # TODO: consider returning event when processing packet
+            print("Captured entire handshake!")
+
+        self.handshakes[bssid, client] = handshake
+
+    @staticmethod
+    def __extract_macs_from(packet: Packet) -> Tuple[str, str]:
+        if packet.haslayer(Dot11FCS):
+            fcs = packet[Dot11FCS]
+            bssid = fcs.addr3
+            client = fcs.addr1 if bssid != fcs.addr1 else fcs.addr2
+
+            return bssid, client
+
+        return "", ""
