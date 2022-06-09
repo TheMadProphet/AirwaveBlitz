@@ -116,10 +116,10 @@ class Statistics:
         self.packets = PacketList()
 
     def process_packet(self, packet: Packet) -> None:
-        if packet.haslayer(Dot11):
-            if packet.haslayer(Dot11Beacon) or packet.haslayer(Dot11ProbeResp):
+        if Dot11 in packet:
+            if Dot11Beacon in packet or Dot11ProbeResp in packet:
                 self.__process_beacon(packet)
-            if packet.haslayer(EAPOL):
+            if EAPOL in packet:
                 self.__process_eapol(packet)
 
         self.packets.append(packet)
@@ -135,7 +135,7 @@ class Statistics:
         return PacketList()
 
     def __process_beacon(self, packet: Packet) -> None:
-        assert packet.haslayer(Dot11Beacon) or packet.haslayer(Dot11ProbeResp)
+        assert Dot11Beacon in packet or Dot11ProbeResp in packet
 
         ap = AccessPoint.empty(bssid=packet[Dot11].addr3)
         for elt in Packet.payloads(packet):
@@ -167,13 +167,13 @@ class Statistics:
         if ap.bssid in self.access_points:
             old_ap = self.access_points[ap.bssid]
             ap.beacon_count = old_ap.beacon_count + 1
-        elif packet.haslayer(Dot11Beacon):
+        elif Dot11Beacon in packet:
             ap.beacon_count += 1
 
         self.access_points[ap.bssid] = ap
 
     def __process_eapol(self, packet: Packet) -> None:
-        assert packet.haslayer(EAPOL)
+        assert EAPOL in packet
 
         bssid, client = self.__extract_macs_from(packet)
         if (bssid, client) in self.handshakes:
@@ -191,7 +191,7 @@ class Statistics:
 
     @staticmethod
     def __extract_macs_from(packet: Packet) -> Tuple[str, str]:
-        if packet.haslayer(Dot11FCS):
+        if Dot11FCS in packet:
             fcs = packet[Dot11FCS]
             bssid = fcs.addr3
             client = fcs.addr1 if bssid != fcs.addr1 else fcs.addr2
