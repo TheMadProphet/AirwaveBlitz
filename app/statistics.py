@@ -5,7 +5,6 @@ from typing import Dict, Set, Tuple
 
 from scapy.layers.dot11 import (
     AKMSuite,
-    Dot11,
     Dot11Beacon,
     Dot11Elt,
     Dot11EltMicrosoftWPA,
@@ -16,7 +15,7 @@ from scapy.layers.dot11 import (
 )
 from scapy.plist import PacketList
 
-from app.packets.dot11 import Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID, Packet
+from app.packets.dot11 import Dot11, Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID, Packet
 from app.packets.eap import EAPOL
 
 
@@ -109,6 +108,11 @@ class Handshake:
 
 
 class Statistics:
+    # TODO: Use [Dot11].is_management
+    MANAGEMENT = 0x1
+    CONTROL = 0x2
+    DATA = 0x3
+
     def __init__(self) -> None:
         self.access_points: Dict[str, AccessPoint] = dict()
         self.handshakes: Dict[Tuple[str, str], Handshake] = dict()
@@ -117,6 +121,9 @@ class Statistics:
 
     def process_packet(self, packet: Packet) -> None:
         if Dot11 in packet:
+            if Dot11.type == self.DATA:
+                self.__process_data(packet)
+
             if Dot11Beacon in packet or Dot11ProbeResp in packet:
                 self.__process_beacon(packet)
             if EAPOL in packet:
@@ -133,6 +140,11 @@ class Statistics:
                 return handshake.packets()
 
         return PacketList()
+
+    def __process_data(self, packet: Packet):
+        assert packet.type == self.DATA
+        # TODO: Data frames in sample.pcap, add bssid->devices
+        pass
 
     def __process_beacon(self, packet: Packet) -> None:
         assert Dot11Beacon in packet or Dot11ProbeResp in packet

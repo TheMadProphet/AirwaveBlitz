@@ -1,8 +1,7 @@
 from scapy.compat import raw
-from scapy.layers.dot11 import RadioTap
 from scapy.utils import PcapReader
 
-from app.packets.dot11 import Packet
+from app.packets.dot11 import Packet, RadioTap
 from app.statistics import AccessPoint, Statistics
 
 test_ap = AccessPoint(
@@ -22,7 +21,7 @@ def test_create() -> None:
     assert Statistics() is not None
 
 
-def test_process_beacon() -> None:
+def test_beacon() -> None:
     statistics = Statistics()
 
     ap_beacon = test_ap.forge_beacon()
@@ -35,7 +34,11 @@ def test_process_beacon() -> None:
     assert result_ap.security == test_ap.security
 
 
-def test_process_response() -> None:
+def test_response() -> None:
+    pass
+
+
+def test_eapol() -> None:
     pass
 
 
