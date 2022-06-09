@@ -18,8 +18,12 @@ key_descriptor_versions = {
 }
 
 
-# 802.11-2016 - 12.7.2 & 801.1X-2010 - 11.9
+# 802.11-2016 - 12.7.2
+# 801.1X-2010 - 11.9
 class EAPOL(scapy.EAPOL):  # type: ignore
+    EAPOL_KEY = 0x3
+    PAIRWISE = 0x1
+
     fields_desc = scapy.EAPOL.fields_desc + [
         ByteEnumField("key_descriptor_type", 0, {1: "RC4", 2: "IEEE 802.11"}),
         BitField("reserved", 0, 2),  # TODO: multiple fields under "reserved"?
@@ -48,10 +52,16 @@ class EAPOL(scapy.EAPOL):  # type: ignore
     def is_sent_from_ap(self) -> bool:
         return self.key_ack == 1
 
+    def is_key(self) -> bool:
+        return self.type == self.EAPOL_KEY
+
+    def is_pairwise(self) -> bool:
+        return self.key_type == self.PAIRWISE
+
     # Returns handshake sequence number (1-4), or 0 if it can't be determined
+    # TODO: better naming related to message/sequence number
     def get_handshake_sequence(self) -> int:
-        # EAPOL-Key and Pairwise
-        if self.type == 0x3 and self.key_type == 1:
+        if self.is_key() and self.is_pairwise():
             if self.is_sent_from_ap():
                 if self.key_mic == 0:
                     return 1
@@ -73,4 +83,5 @@ class EAPOL(scapy.EAPOL):  # type: ignore
             bind_layers(packet_type, EAPOL, fields)
 
 
+# TODO: create actual solution (i.e. rebind packets on application load, not through import)
 EAPOL.rebind()
