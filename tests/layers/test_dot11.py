@@ -3,7 +3,9 @@ from samples.raw_layers.dot11 import (
     control_ack_2,
     data_null,
     data_qos_1,
+    data_qos_2,
     data_qos_null_1,
+    data_qos_null_2,
     management_beacon_1,
     management_probe_response,
 )
@@ -19,6 +21,7 @@ def test_has_type_helpers() -> None:
     assert hasattr(Dot11, "is_management")
     assert hasattr(Dot11, "is_control")
     assert hasattr(Dot11, "is_data")
+    assert hasattr(Dot11, "extract_addresses")
 
 
 def test_type_management_beacon() -> None:
@@ -68,3 +71,13 @@ def test_type_data_qos() -> None:
     assert null_data.is_management() is False
     assert null_data.is_control() is False
     assert null_data.is_data() is True
+
+
+def test_extract_addresses() -> None:
+    client, bssid = ("00:1b:d4:58:e6:1a", "64:a0:e7:af:47:4e")
+    assert client, bssid == Dot11(management_probe_response).extract_addresses()
+    assert client, bssid == Dot11(data_null).extract_addresses()
+    assert client, bssid == Dot11(data_qos_null_1).extract_addresses()
+    assert client, bssid == Dot11(data_qos_null_2).extract_addresses()
+    assert client, bssid == Dot11(data_qos_1).extract_addresses()
+    assert client, bssid == Dot11(data_qos_2).extract_addresses()

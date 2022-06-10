@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import scapy.layers.dot11 as dot11
 from scapy.packet import Packet as ScapyPacket
@@ -33,3 +33,31 @@ class Dot11Extensions(dot11.Dot11):  # type: ignore
 
     def is_data(self) -> bool:
         return self.type == Dot11Extensions.DATA
+
+    def extract_addresses(self) -> Tuple[str, str]:
+        """
+        Returns Client and Access Point MAC addresses.
+
+        Client MAC may not make sense depending on packet: it's up to caller to use
+        this function in correct scenarios (i.e. beacons do not have a client)
+
+        :return: (client, bssid)
+        """
+        assert not self.is_control(), "cannot extract bssid from control packets"
+
+        if self.is_management():
+            return self.addr1, self.addr3
+
+        # Otherwise, its data packet
+        from_ds = self.FCfield.from_DS
+        to_ds = self.FCfield.to_DS
+
+        # 802.11-2016 9.3.2.1: Table 9-26
+        if from_ds and to_ds:
+            return self.addr1, self.addr4
+        if from_ds:
+            return self.addr1, self.addr2
+        if to_ds:
+            return self.addr2, self.addr1
+
+        return self.addr1, self.addr3
