@@ -62,9 +62,12 @@ class EAPOLKey(Packet):  # type: ignore
     def is_pairwise(self) -> bool:
         return self.key_type == self.PAIRWISE
 
-    # Returns handshake sequence number (1-4), or 0 if it can't be determined
-    # TODO: better naming related to message/sequence number
     def guess_key_number(self) -> int:
+        """
+        Determines 4-way handshake key number
+
+        :return: key number (1-4), or 0 if it cannot be determined
+        """
         if self.is_pairwise():
             if self.is_sent_from_ap():
                 if not self.key_info.mic:

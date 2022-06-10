@@ -43,7 +43,7 @@ def test_all() -> None:
     statistics = Statistics()
     bssid = "64:a0:e7:af:47:4e"
 
-    for packet in PcapReader("samples/WPA2-PSK.cap"):
+    for packet in PcapReader("samples/captures/WPA2-PSK.cap"):
         statistics.process_packet(packet)
 
     assert statistics.get_handshake(bssid) is not None

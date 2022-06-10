@@ -18,6 +18,13 @@ class Dot11Extensions(dot11.Dot11):  # type: ignore
     CONTROL = 1
     DATA = 2
 
+    @staticmethod
+    def patch() -> None:
+        dot11.Dot11.is_management = Dot11Extensions.is_management
+        dot11.Dot11.is_control = Dot11Extensions.is_control
+        dot11.Dot11.is_data = Dot11Extensions.is_data
+        dot11.Dot11.extract_addresses = Dot11Extensions.extract_addresses
+
     def is_management(self) -> bool:
         return self.type == Dot11Extensions.MANAGEMENT
 
@@ -26,8 +33,3 @@ class Dot11Extensions(dot11.Dot11):  # type: ignore
 
     def is_data(self) -> bool:
         return self.type == Dot11Extensions.DATA
-
-
-dot11.Dot11.is_management = Dot11Extensions.is_management
-dot11.Dot11.is_control = Dot11Extensions.is_control
-dot11.Dot11.is_data = Dot11Extensions.is_data
