@@ -38,8 +38,9 @@ class Dot11Extensions(dot11.Dot11):  # type: ignore
         """
         Returns Client and Access Point MAC addresses.
 
-        Client MAC may not make sense depending on packet: it's up to caller to use
-        this function in correct scenarios (i.e. beacons do not have a client)
+        Client MAC may not make sense depending on packet: it's up to caller
+        to use this function in correct scenarios (i.e. for beacons broadcast
+        MAC will be returned as client)
 
         :return: (client, bssid)
         """

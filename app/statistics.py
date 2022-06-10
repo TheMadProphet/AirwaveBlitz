@@ -15,9 +15,11 @@ from scapy.layers.dot11 import (
 )
 from scapy.plist import PacketList
 
-from app.layers.dot11 import Packet
+from app.layers.dot11 import Dot11Extensions, Packet
 from app.layers.eap import EAPOLKey
 from app.layers.elt import Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID
+
+Dot11Extensions.patch()
 
 
 @dataclass
@@ -61,11 +63,15 @@ class AccessPoint:
         )
 
 
+# TODO: is this class necessary/useful? (yes if we can see client->ap signal strength)
 @dataclass
 class Device:
     mac: str
-    bssid: str
-    signal: int  # ?
+    bssid: str = ""  # ?
+    signal: int = 0
+
+    def __hash__(self) -> int:
+        return self.mac.__hash__()
 
 
 @dataclass
@@ -80,7 +86,7 @@ class Handshake:
         key_number = key.guess_key_number()
 
         if key_number == 1:
-            self.reset()
+            self.__reset()
             self.messages[key_number] = packet
 
         elif key_number == 2:
@@ -103,18 +109,18 @@ class Handshake:
 
         return False
 
-    def reset(self) -> None:
-        self.messages = dict()
-
     def packets(self) -> PacketList:
         return PacketList(list(self.messages.values()))
+
+    def __reset(self) -> None:
+        self.messages = dict()
 
 
 class Statistics:
     def __init__(self) -> None:
         self.access_points: Dict[str, AccessPoint] = dict()
         self.handshakes: Dict[Tuple[str, str], Handshake] = dict()
-        self.devices: Dict[str, Device] = dict()
+        self.devices: Set[Device] = set()
         self.packets = PacketList()
 
     def process_packet(self, packet: Packet) -> None:
@@ -128,11 +134,11 @@ class Statistics:
 
         self.packets.append(packet)
 
-    def get_ap(self, mac: str) -> AccessPoint:
-        return self.access_points[mac]
+    def get_ap(self, bssid: str) -> AccessPoint:
+        return self.access_points[bssid]
 
     def get_handshake(self, bssid: str) -> Optional[PacketList]:
-        for (_bssid, client), handshake in self.handshakes.items():
+        for (_client, _bssid), handshake in self.handshakes.items():
             if _bssid == bssid and handshake.is_captured():
                 return handshake.packets()
 
@@ -140,13 +146,26 @@ class Statistics:
 
     def __process_data(self, packet: Packet) -> None:
         assert Dot11 in packet and packet[Dot11].is_data()
-        # TODO: Data frames in sample.pcap, add bssid->devices
-        pass
+
+        client, bssid = packet[Dot11].extract_addresses()
+        if bssid not in self.access_points:
+            return
+
+        # TODO: signal
+        device = Device(mac=client, bssid=bssid)
+        self.devices.add(device)
+        self.access_points[bssid].devices.add(device)
 
     def __process_beacon(self, packet: Packet) -> None:
         assert Dot11Beacon in packet or Dot11ProbeResp in packet
 
-        ap = AccessPoint.empty(bssid=packet[Dot11].addr3)
+        client, bssid = packet[Dot11].extract_addresses()
+        if bssid in self.access_points:
+            ap = self.access_points[bssid]
+            ap.beacon_count += 1
+        else:
+            ap = AccessPoint.empty(bssid=bssid)
+
         # TODO: iterpayloads
         for elt in Packet.payloads(packet):
             if not isinstance(elt, Dot11Elt):
@@ -168,6 +187,8 @@ class Statistics:
                 else:
                     ap.security.add("WPA")
 
+        # TODO: get channel from RatioTap if not available in tags
+
         if not ap.security and hasattr(packet, "cap"):
             if packet.cap.privacy:
                 ap.security.add("WEP")
@@ -186,8 +207,8 @@ class Statistics:
         assert EAPOLKey in packet
 
         client, bssid = packet[Dot11].extract_addresses()
-        if (bssid, client) in self.handshakes:
-            handshake = self.handshakes[bssid, client]
+        if (client, bssid) in self.handshakes:
+            handshake = self.handshakes[client, bssid]
         else:
             handshake = Handshake(dict())
 
@@ -198,4 +219,4 @@ class Statistics:
             # TODO: consider returning event when processing packet
             print("Captured entire handshake!")
 
-        self.handshakes[bssid, client] = handshake
+        self.handshakes[client, bssid] = handshake
