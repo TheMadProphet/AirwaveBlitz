@@ -76,7 +76,7 @@ class Handshake:
             return
 
         message = packet[EAPOL]
-        message_number = message.get_handshake_sequence()
+        message_number = message.guess_message_number()
 
         if message_number == 1:
             self.reset()

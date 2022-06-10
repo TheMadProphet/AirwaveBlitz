@@ -2,7 +2,6 @@ from scapy.compat import raw
 from scapy.utils import PcapNgReader, PcapReader
 
 from app.layers.dot11 import Dot11, Packet, RadioTap
-from app.layers.eap import EAPOL, EAPOLKey
 from app.statistics import AccessPoint, Statistics
 
 test_ap = AccessPoint(
@@ -36,10 +35,6 @@ def test_beacon() -> None:
 
 
 def test_response() -> None:
-    pass
-
-
-def test_eapol() -> None:
     pass
 
 
