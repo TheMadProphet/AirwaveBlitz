@@ -1,7 +1,8 @@
 from scapy.compat import raw
+from scapy.layers.dot11 import RadioTap
 from scapy.utils import PcapNgReader, PcapReader
 
-from app.layers.dot11 import Dot11, Packet, RadioTap
+from app.layers.dot11 import Packet
 from app.statistics import AccessPoint, Statistics
 
 test_ap = AccessPoint(
@@ -40,8 +41,11 @@ def test_response() -> None:
 
 def test_all() -> None:
     statistics = Statistics()
+    bssid = "64:a0:e7:af:47:4e"
 
     for packet in PcapReader("samples/WPA2-PSK.cap"):
         statistics.process_packet(packet)
+
+    assert statistics.get_handshake(bssid) is not None
 
     pass

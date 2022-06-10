@@ -23,7 +23,7 @@ def test_eapol_key_1() -> None:
     assert eapol_key.key_mic == 0
     assert eapol_key.secure == 0
     assert eapol_key.key_data_len == 22
-    assert eapol_key.guess_message_number() == 1
+    assert eapol_key.guess_key_number() == 1
 
 
 def test_eapol_key_2() -> None:
@@ -40,7 +40,7 @@ def test_eapol_key_2() -> None:
     assert eapol_key.key_mic == 1
     assert eapol_key.secure == 0
     assert eapol_key.key_data_len == 22
-    assert eapol_key.guess_message_number() == 2
+    assert eapol_key.guess_key_number() == 2
 
 
 def test_eapol_key_3() -> None:
@@ -57,7 +57,7 @@ def test_eapol_key_3() -> None:
     assert eapol_key.key_mic == 1
     assert eapol_key.secure == 1
     assert eapol_key.key_data_len == 56
-    assert eapol_key.guess_message_number() == 3
+    assert eapol_key.guess_key_number() == 3
 
 
 def test_eapol_key_4() -> None:
@@ -75,4 +75,4 @@ def test_eapol_key_4() -> None:
     assert eapol_key.secure == 1
     assert eapol_key.key_data_len == 0
     assert eapol_key.key_data == b""
-    assert eapol_key.guess_message_number() == 4
+    assert eapol_key.guess_key_number() == 4

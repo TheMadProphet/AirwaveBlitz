@@ -56,7 +56,7 @@ class EAPOLKey(Packet):  # type: ignore
 
     # Returns handshake sequence number (1-4), or 0 if it can't be determined
     # TODO: better naming related to message/sequence number
-    def guess_message_number(self) -> int:
+    def guess_key_number(self) -> int:
         if self.is_pairwise():
             if self.is_sent_from_ap():
                 if self.key_mic == 0:

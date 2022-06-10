@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Set, Tuple
+from typing import Dict, Optional, Set, Tuple
 
-from scapy.layers import dot11
 from scapy.layers.dot11 import (
     AKMSuite,
+    Dot11,
     Dot11Beacon,
     Dot11Elt,
     Dot11EltMicrosoftWPA,
@@ -16,8 +16,8 @@ from scapy.layers.dot11 import (
 )
 from scapy.plist import PacketList
 
-from app.layers.dot11 import Dot11, Packet
-from app.layers.eap import EAPOL
+from app.layers.dot11 import Packet
+from app.layers.eap import EAPOLKey
 from app.layers.elt import Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID
 
 
@@ -75,23 +75,23 @@ class Handshake:
         if self.is_captured():
             return
 
-        message = packet[EAPOL]
-        message_number = message.guess_message_number()
+        key = packet[EAPOLKey]
+        key_number = key.guess_key_number()
 
-        if message_number == 1:
+        if key_number == 1:
             self.reset()
-            self.messages[message_number] = packet
+            self.messages[key_number] = packet
 
-        elif message_number == 2:
-            self.messages[message_number] = packet
+        elif key_number == 2:
+            self.messages[key_number] = packet
 
-        elif message_number == 3:
-            if message.nonce == self.messages[1].nonce:
-                self.messages[message_number] = packet
+        elif key_number == 3:
+            if key.nonce == self.messages[1].nonce:
+                self.messages[key_number] = packet
 
-        elif message_number == 4:
-            if message.nonce == self.messages[2].nonce:
-                self.messages[message_number] = packet
+        elif key_number == 4:
+            if key.nonce == self.messages[2].nonce:
+                self.messages[key_number] = packet
 
     def is_captured(self) -> bool:
         if len(self.messages) == 4:
@@ -110,11 +110,6 @@ class Handshake:
 
 
 class Statistics:
-    # TODO: Use [Dot11].is_management
-    MANAGEMENT = 0x1
-    CONTROL = 0x2
-    DATA = 0x3
-
     def __init__(self) -> None:
         self.access_points: Dict[str, AccessPoint] = dict()
         self.handshakes: Dict[Tuple[str, str], Handshake] = dict()
@@ -123,28 +118,27 @@ class Statistics:
 
     def process_packet(self, packet: Packet) -> None:
         if Dot11 in packet:
-            if Dot11.type == self.DATA:
+            if packet[Dot11].is_data():
                 self.__process_data(packet)
-
             if Dot11Beacon in packet or Dot11ProbeResp in packet:
                 self.__process_beacon(packet)
-            if EAPOL in packet:
-                self.__process_eapol(packet)
+            if EAPOLKey in packet:
+                self.__process_eapol_key(packet)
 
         self.packets.append(packet)
 
     def get_ap(self, mac: str) -> AccessPoint:
         return self.access_points[mac]
 
-    def get_handshake(self, bssid: str) -> PacketList:
+    def get_handshake(self, bssid: str) -> Optional[PacketList]:
         for (_bssid, client), handshake in self.handshakes.items():
             if _bssid == bssid and handshake.is_captured():
                 return handshake.packets()
 
-        return PacketList()
+        return None
 
-    def __process_data(self, packet: Packet):
-        assert packet.type == self.DATA
+    def __process_data(self, packet: Packet) -> None:
+        assert Dot11 in packet and packet[Dot11].is_data()
         # TODO: Data frames in sample.pcap, add bssid->devices
         pass
 
@@ -152,6 +146,7 @@ class Statistics:
         assert Dot11Beacon in packet or Dot11ProbeResp in packet
 
         ap = AccessPoint.empty(bssid=packet[Dot11].addr3)
+        # TODO: iterpayloads
         for elt in Packet.payloads(packet):
             if not isinstance(elt, Dot11Elt):
                 continue
@@ -186,8 +181,8 @@ class Statistics:
 
         self.access_points[ap.bssid] = ap
 
-    def __process_eapol(self, packet: Packet) -> None:
-        assert EAPOL in packet
+    def __process_eapol_key(self, packet: Packet) -> None:
+        assert EAPOLKey in packet
 
         bssid, client = self.__extract_macs_from(packet)
         if (bssid, client) in self.handshakes:
