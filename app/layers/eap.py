@@ -4,6 +4,7 @@ from scapy.fields import (
     BitField,
     ByteEnumField,
     FieldLenField,
+    FlagsField,
     LongField,
     NBytesField,
     ShortField,
@@ -26,14 +27,21 @@ class EAPOLKey(Packet):  # type: ignore
     fields_desc = [
         ByteEnumField("descriptor_type", 0, {1: "RC4", 2: "IEEE 802.11"}),
         BitField("reserved14_15", 0, 2),
-        BitField("smk", 0, 1),
-        BitField("encrypted_key_data", 0, 1),
-        BitField("request", 0, 1),
-        BitField("error", 0, 1),
-        BitField("secure", 0, 1),
-        BitField("key_mic", 0, 1),
-        BitField("key_ack", 0, 1),
-        BitField("install", 0, 1),
+        FlagsField(
+            "key_info",
+            0,
+            8,
+            [
+                "install",
+                "ack",
+                "mic",
+                "secure",
+                "error",
+                "request",
+                "encrypted_key_data",
+                "smk",
+            ],
+        ),
         BitField("reserved4_5", 0, 2),
         BitEnumField("key_type", 0, 1, {0: "Group Key", 1: "Pairwise Key"}),
         BitEnumField("key_descriptor_version", 0, 3, key_descriptor_versions),
@@ -49,7 +57,7 @@ class EAPOLKey(Packet):  # type: ignore
     ]
 
     def is_sent_from_ap(self) -> bool:
-        return self.key_ack == 1
+        return self.key_info.ack
 
     def is_pairwise(self) -> bool:
         return self.key_type == self.PAIRWISE
@@ -59,12 +67,12 @@ class EAPOLKey(Packet):  # type: ignore
     def guess_key_number(self) -> int:
         if self.is_pairwise():
             if self.is_sent_from_ap():
-                if self.key_mic == 0:
+                if not self.key_info.mic:
                     return 1
-                elif self.install == 1:
+                elif self.key_info.install:
                     return 3
             else:
-                if self.secure == 0:
+                if self.key_info.secure is False:
                     return 2
                 else:
                     return 4
