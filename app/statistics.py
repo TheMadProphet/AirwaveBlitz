@@ -9,7 +9,6 @@ from scapy.layers.dot11 import (
     Dot11Beacon,
     Dot11Elt,
     Dot11EltMicrosoftWPA,
-    Dot11FCS,
     Dot11ProbeResp,
     RadioTap,
     RSNCipherSuite,
@@ -28,6 +27,8 @@ class AccessPoint:
     security: Set[str]
     signal: int
     channel: int
+    devices: Set[Device] = field(default_factory=set)
+    handshake: Optional[Handshake] = None
     beacon_count: int = 0
     data_transferred: int = 0
 
@@ -184,7 +185,7 @@ class Statistics:
     def __process_eapol_key(self, packet: Packet) -> None:
         assert EAPOLKey in packet
 
-        bssid, client = self.__extract_macs_from(packet)
+        client, bssid = packet[Dot11].extract_addresses()
         if (bssid, client) in self.handshakes:
             handshake = self.handshakes[bssid, client]
         else:
@@ -193,18 +194,8 @@ class Statistics:
         handshake.register_message(packet)
 
         if handshake.is_captured():
+            self.access_points[bssid].handshake = handshake
             # TODO: consider returning event when processing packet
             print("Captured entire handshake!")
 
         self.handshakes[bssid, client] = handshake
-
-    @staticmethod
-    def __extract_macs_from(packet: Packet) -> Tuple[str, str]:
-        if Dot11FCS in packet:
-            fcs = packet[Dot11FCS]
-            bssid = fcs.addr3
-            client = fcs.addr1 if bssid != fcs.addr1 else fcs.addr2
-
-            return bssid, client
-
-        return "", ""
