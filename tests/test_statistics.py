@@ -1,7 +1,8 @@
 from scapy.compat import raw
-from scapy.utils import PcapReader
+from scapy.utils import PcapNgReader, PcapReader
 
-from app.packets.dot11 import Packet, RadioTap
+from app.layers.dot11 import Dot11, Packet, RadioTap
+from app.layers.eap import EAPOL, EAPOLKey
 from app.statistics import AccessPoint, Statistics
 
 test_ap = AccessPoint(

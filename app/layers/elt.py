@@ -1,31 +1,8 @@
-from typing import Iterable, Type
+from typing import Type
 
 import scapy.layers.dot11 as dot11
 from scapy.compat import plain_str
-from scapy.config import conf
 from scapy.fields import ByteEnumField, ByteField, StrFixedLenField
-from scapy.packet import Packet as ScapyPacket
-
-
-class Packet(ScapyPacket):  # type: ignore
-    @staticmethod
-    def payloads(packet: ScapyPacket) -> Iterable[ScapyPacket]:
-        payload = packet
-        while payload:
-            yield payload
-            payload = payload.payload
-
-
-class RadioTap(dot11.RadioTap):  # type: ignore
-    def guess_payload_class(self, payload: Packet) -> Type[Packet]:
-        if self.present and self.present.Flags and self.Flags.FCS:
-            return dot11.Dot11FCS
-        return Dot11
-
-
-class Dot11(dot11.Dot11):  # type: ignore
-    # TODO: is_management()
-    pass
 
 
 class Dot11EltSSID(dot11.Dot11Elt):  # type: ignore
@@ -37,7 +14,7 @@ class Dot11EltSSID(dot11.Dot11Elt):  # type: ignore
         StrFixedLenField("ssid", b"", length_from=lambda pkt: pkt.len),
     ]
 
-    def value(self) -> str:
+    def get_ssid(self) -> str:
         return plain_str(self.ssid)
 
 
@@ -47,7 +24,7 @@ class Dot11EltDSSSet(dot11.Dot11EltDSSSet):  # type: ignore
 
 
 class Dot11EltRSN(dot11.Dot11EltRSN):  # type: ignore
-    def value(self) -> str:
+    def get_security(self) -> str:
         assert isinstance(self, Dot11EltRSN)
 
         wpa_version = "WPA2"
@@ -78,12 +55,7 @@ def register_elt(cls: Type[dot11.Dot11Elt], tag_id: int) -> None:
     cls.registered_ies[tag_id] = cls
 
 
-# TODO: create actual solution (i.e. rebind packets on application load, not through import)
+# TODO: create actual solution (i.e. rebind layers on application load, not through import)
 register_elt(Dot11EltSSID, 0)
 register_elt(Dot11EltDSSSet, 3)
 register_elt(Dot11EltRSN, 48)
-
-conf.l2types.register(0x69, Dot11)
-conf.l2types.register_num2layer(801, Dot11)
-conf.l2types.register(0x7F, RadioTap)
-conf.l2types.register_num2layer(803, RadioTap)

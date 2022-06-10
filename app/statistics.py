@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Set, Tuple
 
+from scapy.layers import dot11
 from scapy.layers.dot11 import (
     AKMSuite,
     Dot11Beacon,
@@ -15,8 +16,9 @@ from scapy.layers.dot11 import (
 )
 from scapy.plist import PacketList
 
-from app.packets.dot11 import Dot11, Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID, Packet
-from app.packets.eap import EAPOL
+from app.layers.dot11 import Dot11, Packet
+from app.layers.eap import EAPOL
+from app.layers.elt import Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID
 
 
 @dataclass
@@ -155,13 +157,13 @@ class Statistics:
                 continue
 
             if isinstance(elt, Dot11EltSSID):
-                ap.ssid = elt.value()
+                ap.ssid = elt.get_ssid()
 
             if isinstance(elt, Dot11EltDSSSet):
-                ap.channel = elt.value()
+                ap.channel = elt.channel
 
             if isinstance(elt, Dot11EltRSN):
-                ap.security.add(elt.value())
+                ap.security.add(elt.get_security())
 
             if isinstance(elt, Dot11EltMicrosoftWPA):
                 if elt.akm_suites:
