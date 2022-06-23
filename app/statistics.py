@@ -97,7 +97,7 @@ class Handshake:
                 self.messages[key_number] = packet
 
         elif key_number == 4:
-            if key.nonce == self.messages[2].nonce:
+            if not key.nonce or key.nonce == self.messages[2].nonce:
                 self.messages[key_number] = packet
 
     def is_captured(self) -> bool:
@@ -152,6 +152,8 @@ class Statistics:
             return
 
         # TODO: signal
+        # TODO: ignore 33:33:00:* 01:00:5e:*
+        # https://superuser.com/questions/809679/what-is-the-mac-address-of-multicast-ipv6
         device = Device(mac=client, bssid=bssid)
         self.devices.add(device)
         self.access_points[bssid].devices.add(device)
