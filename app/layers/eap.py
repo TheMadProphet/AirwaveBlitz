@@ -64,7 +64,7 @@ class EAPOLKey(Packet):  # type: ignore
 
     def guess_key_number(self) -> int:
         """
-        Determines 4-way handshake key number
+        Determines handshake key number
 
         :return: key number (1-4), or 0 if it cannot be determined
         """
@@ -79,6 +79,10 @@ class EAPOLKey(Packet):  # type: ignore
                     return 2
                 else:
                     return 4
+        else:
+            if self.key_info.ack:
+                return 1
+            return 2
 
         return 0
 
