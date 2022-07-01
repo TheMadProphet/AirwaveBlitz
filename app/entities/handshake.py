@@ -28,11 +28,15 @@ class Handshake:
             self.messages[key_number] = packet
 
         elif key_number == 3:
-            if key.nonce == self.messages[1].nonce:  # TODO: self.messages[1] and ...
+            if self.messages[1] and key.nonce == self.messages[1].nonce:
                 self.messages[key_number] = packet
 
         elif key_number == 4:
-            if not key.nonce or key.nonce == self.messages[2].nonce:
+            if (
+                not key.nonce
+                or self.messages[2]
+                and key.nonce == self.messages[2].nonce
+            ):
                 self.messages[key_number] = packet
 
     def is_captured(self) -> bool:
