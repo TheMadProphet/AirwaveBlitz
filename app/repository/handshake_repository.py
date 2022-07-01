@@ -12,11 +12,11 @@ class HandshakeRepository:
     def find(self, mac: str, bssid: str) -> Handshake:
         return self.handshakes.find(self.__concatenate(mac, bssid))
 
-    def find_all_for_ap(self, mac: str) -> List[Handshake]:
+    def find_all_for_ap(self, bssid: str) -> List[Handshake]:
         result: List[Handshake] = []
         for mac_bssid, handshake in self.handshakes.find_all().items():
-            _, bssid = self.__split(mac_bssid)
-            if bssid == mac:
+            current_mac, current_bssid = self.__split(mac_bssid)
+            if current_bssid == bssid:
                 result.append(handshake)
 
         return result
