@@ -1,6 +1,6 @@
 from typing import Iterable, Protocol
 
-from app.interface import InterfaceMode, InterfaceState
+from app.entities.interface import InterfaceMode, InterfaceState
 
 
 class InterfaceController(Protocol):

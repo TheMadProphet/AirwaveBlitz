@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List
 
 import netifaces as ni
 
-from app.interface import InterfaceMode, InterfaceState
+from app.entities.interface import InterfaceMode, InterfaceState
 
 
 class IwIpException(Exception):

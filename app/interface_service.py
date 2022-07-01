@@ -7,7 +7,7 @@ from scapy.all import AsyncSniffer
 from scapy.packet import Packet
 from scapy.plist import PacketList
 
-from app.interface import Interface, InterfaceMode
+from app.entities.interface import Interface, InterfaceMode
 from app.interface_controller import InterfaceController
 
 

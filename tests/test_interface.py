@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from app.interface import Interface
+from app.entities.interface import Interface
 from app.interface_service import InterfaceService
 from app.iw_ip import IwIp
 

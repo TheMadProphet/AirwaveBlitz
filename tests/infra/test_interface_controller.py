@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from app.interface import InterfaceMode, InterfaceState
+from app.entities.interface import InterfaceMode, InterfaceState
 from app.iw_ip import IwIp as InterfaceController
 
 # TODO: Supply variables from commandline
