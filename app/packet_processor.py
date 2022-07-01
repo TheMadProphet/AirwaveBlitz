@@ -9,11 +9,12 @@ from scapy.layers.dot11 import (
     Dot11EltMicrosoftWPA,
     Dot11ProbeResp,
 )
+from scapy.packet import Packet
 
 from app.entities.access_point import AccessPoint
 from app.entities.device import Device
 from app.entities.handshake import Handshake
-from app.layers.dot11 import Dot11Extensions, Packet
+from app.layers.dot11 import Dot11Extensions
 from app.layers.eap import EAPOLKey
 from app.layers.elt import Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID
 from app.repository.entity_repository import EntityNotFoundException, EntityRepository
@@ -67,8 +68,7 @@ class PacketProcessor:
         except EntityNotFoundException:
             ap = AccessPoint.empty(bssid=bssid)
 
-        # TODO: iterpayloads
-        for elt in Packet.payloads(packet):
+        for elt in packet.iterpayloads():
             if not isinstance(elt, Dot11Elt):
                 continue
 

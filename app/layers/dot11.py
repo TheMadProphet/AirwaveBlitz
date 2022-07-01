@@ -1,16 +1,6 @@
-from typing import Iterable, Tuple
+from typing import Tuple
 
 import scapy.layers.dot11 as dot11
-from scapy.packet import Packet as ScapyPacket
-
-
-class Packet(ScapyPacket):  # type: ignore
-    @staticmethod
-    def payloads(packet: ScapyPacket) -> Iterable[ScapyPacket]:
-        payload = packet
-        while payload:
-            yield payload
-            payload = payload.payload
 
 
 class Dot11Extensions(dot11.Dot11):  # type: ignore

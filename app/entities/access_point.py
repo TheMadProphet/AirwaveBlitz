@@ -4,10 +4,11 @@ from dataclasses import dataclass, field
 from typing import Optional, Set
 
 from scapy.layers.dot11 import AKMSuite, Dot11, Dot11Beacon, RadioTap, RSNCipherSuite
+from scapy.packet import Packet
 
 from app.entities.device import Device
 from app.entities.handshake import Handshake
-from app.layers.dot11 import Dot11Extensions, Packet
+from app.layers.dot11 import Dot11Extensions
 from app.layers.elt import Dot11EltDSSSet, Dot11EltRSN, Dot11EltSSID
 
 Dot11Extensions.patch()
@@ -33,7 +34,6 @@ class AccessPoint:
         return isinstance(other, AccessPoint) and self.bssid == other.bssid
 
     def forge_beacon(self) -> Packet:
-        # TODO: create management/beacon layers
         return (
             RadioTap()
             / Dot11(

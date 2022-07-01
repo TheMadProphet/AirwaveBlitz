@@ -1,10 +1,10 @@
 import pytest
 from scapy.compat import raw
 from scapy.layers.dot11 import RadioTap
+from scapy.packet import Packet
 from scapy.utils import PcapNgReader, PcapReader
 
 from app.entities.device import Device
-from app.layers.dot11 import Packet
 from app.packet_processor import AccessPoint, PacketProcessor
 from app.repository.entity_repository import EntityRepository
 from app.repository.handshake_repository import HandshakeRepository

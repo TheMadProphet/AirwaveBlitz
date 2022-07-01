@@ -30,13 +30,11 @@ class IwIp:
 
     @staticmethod
     def run_iw(iface: str = "", args: str = "") -> str:
-        # TODO: Is it right to use sudo here?
-        return IwIp.run_command(f"sudo iw dev {iface} {args}")
+        return IwIp.run_command(f"iw dev {iface} {args}")
 
     @staticmethod
     def run_ip(args: str = "", json_ouput: bool = False) -> str:
-        # TODO: Is it right to use sudo here?
-        return IwIp.run_command(f"sudo ip{' -j' if json_ouput else ''} link {args}")
+        return IwIp.run_command(f"ip{' -j' if json_ouput else ''} link {args}")
 
     @staticmethod
     def list_interfaces() -> Iterable[str]:

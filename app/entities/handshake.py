@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict
 
+from scapy.packet import Packet
 from scapy.plist import PacketList
 
-from app.layers.dot11 import Packet
 from app.layers.eap import EAPOLKey
 
 
