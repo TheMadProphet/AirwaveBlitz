@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
-from app.packet_processor import Handshake
+from app.entities.handshake import Handshake
 from app.repository.entity_repository import EntityRepository
 
 

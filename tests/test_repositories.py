@@ -1,6 +1,6 @@
 import pytest
 
-from app.packet_processor import Handshake
+from app.entities.handshake import Handshake
 from app.repository.entity_repository import EntityNotFoundException, EntityRepository
 from app.repository.handshake_repository import HandshakeRepository
 
