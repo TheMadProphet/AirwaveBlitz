@@ -1,4 +1,4 @@
-from samples.raw_layers.eap import (
+from samples.raw.eap_layers import (
     raw_eapol_key_1,
     raw_eapol_key_2,
     raw_eapol_key_3,

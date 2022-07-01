@@ -1,4 +1,4 @@
-from samples.raw_layers.dot11 import (
+from samples.raw.dot11_layers import (
     control_ack_1,
     control_ack_2,
     data_null,
