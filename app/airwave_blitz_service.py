@@ -1,2 +1,0 @@
-class AirwaveBlitzService:
-    pass
