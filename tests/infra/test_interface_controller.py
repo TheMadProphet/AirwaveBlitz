@@ -10,6 +10,8 @@ iface_name = "wlx00c0caae5a41"
 iface_mac = "00:c0:ca:ae:5a:41"
 run_all_tests = False
 
+pytest.skip(allow_module_level=True)
+
 
 def test_list_interface() -> None:
     ifaces = InterfaceController.list_interfaces()

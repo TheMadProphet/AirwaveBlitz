@@ -12,6 +12,8 @@ iface_mac = "00:c0:ca:ae:5a:41"
 run_all_tests = False
 iface_service = InterfaceService(IwIp())
 
+pytest.skip(allow_module_level=True)
+
 
 def test_list_interface() -> None:
     ifaces = iface_service.list_interface()
